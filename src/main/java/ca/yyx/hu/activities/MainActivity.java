@@ -7,9 +7,6 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
 
-import net.hockeyapp.android.CrashManager;
-import net.hockeyapp.android.UpdateManager;
-
 import ca.yyx.hu.App;
 import ca.yyx.hu.R;
 import ca.yyx.hu.aap.AapProjectionActivity;
@@ -46,7 +43,7 @@ public class MainActivity extends Activity {
             }
         });
 
-        UpdateManager.register(this);
+        //UpdateManager.register(this);
     }
 
     @Override
@@ -63,7 +60,7 @@ public class MainActivity extends Activity {
         } else {
             mVideoButton.setEnabled(false);
         }
-        CrashManager.register(this);
+        //CrashManager.register(this);
     }
 
 }

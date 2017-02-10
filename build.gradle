@@ -6,6 +6,7 @@ buildscript {
     }
     dependencies {
         classpath 'com.android.tools.build:gradle:2.2.3'
+        classpath 'com.google.protobuf:protobuf-gradle-plugin:0.8.0'
     }
 }
 
@@ -16,15 +17,14 @@ allprojects {
 }
 
 apply plugin: 'com.android.application'
+apply plugin: 'com.google.protobuf'
 
 dependencies {
+    compile 'com.google.protobuf:protobuf-lite:3.0.0'
     compile 'com.google.protobuf.nano:protobuf-javanano:3.1.0'
-
     compile 'com.android.support:support-core-utils:25.0.1'
     compile 'com.android.support:support-media-compat:25.0.1'
     compile 'com.android.support:recyclerview-v7:25.0.1'
-
-    compile 'net.hockeyapp.android:HockeySDK:4.1.1'
 }
 
 android {
@@ -35,8 +35,6 @@ android {
         applicationId "ca.yyx.hu"
         minSdkVersion 16
         targetSdkVersion 16
-
-        manifestPlaceholders = [HOCKEYAPP_APP_ID: "$HEADUNIT_HOCKEYAPP_ID"]
 
         versionCode 22
         versionName "2015_11_28"
@@ -89,16 +87,56 @@ android {
         }
     }
 
+    sourceSets {
+        main {
+            proto {
+                srcDir 'src/main/proto'
+            }
+            java {
+                // include self written and generated code
+                srcDirs 'src/main/java', 'generated-sources/main/java'
+            }
+        }
+        // remove the test configuration - at least in your example you don't have a special test proto file
+    }
+
     lintOptions {
         abortOnError false
     }
 
+    protobuf {
+        // Configure the protoc executable
+        protoc {
+            // Download from repositories
+            artifact = 'com.google.protobuf:protoc:3.0.0'
+        }
+
+        generateProtoTasks.generatedFilesBaseDir = 'generated-sources'
+
+        plugins {
+            javalite {
+                // The codegen for lite comes as a separate artifact
+                artifact = 'com.google.protobuf:protoc-gen-javalite:3.0.0'
+            }
+        }
+
+        generateProtoTasks {
+            all().each { task ->
+                task.plugins {
+                    javalite { }
+                }
+            }
+        }
+    }
+
+    /*
     task genSource(type: Exec) {
         println "Executing " + HEADUNIT_SCRIPT_FILE
         commandLine HEADUNIT_SCRIPT_FILE
     }
 
     preBuild.dependsOn genSource
+    */
 
 }
 
