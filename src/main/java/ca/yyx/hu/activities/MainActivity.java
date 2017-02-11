@@ -27,6 +27,7 @@ public class MainActivity extends Activity {
         mVideoButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                finish();
                 Intent aapIntent = new Intent(MainActivity.this, AapProjectionActivity.class);
                 aapIntent.putExtra(AapProjectionActivity.EXTRA_FOCUS, true);
                 startActivity(aapIntent);
@@ -42,8 +43,6 @@ public class MainActivity extends Activity {
                         .commit();
             }
         });
-
-        //UpdateManager.register(this);
     }
 
     @Override
@@ -60,7 +59,6 @@ public class MainActivity extends Activity {
         } else {
             mVideoButton.setEnabled(false);
         }
-        //CrashManager.register(this);
     }
 
 }

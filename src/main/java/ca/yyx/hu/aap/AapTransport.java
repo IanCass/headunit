@@ -100,6 +100,7 @@ public class AapTransport implements Handler.Callback, MicRecorder.Listener {
     }
 
     void quit() {
+        AppLog.i("AA has quit!");
         mMicRecorder.setListener(null);
         mPollThread.quit();
         mAapPoll = null;

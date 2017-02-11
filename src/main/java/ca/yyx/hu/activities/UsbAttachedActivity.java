@@ -59,12 +59,12 @@ public class UsbAttachedActivity extends Activity {
         UsbManager usbManager = (UsbManager) getSystemService(Context.USB_SERVICE);
         UsbModeSwitch usbMode = new UsbModeSwitch(usbManager);
         AppLog.i("Switching USB device to accessory mode " + deviceCompat.getUniqueName());
-        Toast.makeText(this, "Switching USB device to accessory mode " + deviceCompat.getUniqueName(), Toast.LENGTH_SHORT).show();
         if (usbMode.switchMode(device)) {
-            Toast.makeText(this, "Success", Toast.LENGTH_SHORT).show();
+            AppLog.i("Successfully switched mode " + deviceCompat.getUniqueName());
         } else {
-            Toast.makeText(this, "Failed", Toast.LENGTH_SHORT).show();
+            AppLog.i("Failed to switch mode " + deviceCompat.getUniqueName());
         }
+
 
         finish();
     }
