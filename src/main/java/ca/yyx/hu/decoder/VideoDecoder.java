@@ -34,7 +34,7 @@ public class VideoDecoder {
 
             if (!mCodecConfigured && isSps(buffer, offset))
             {
-                AppLog.i("Got SPS sequence...");
+                AppLog.d("Got SPS sequence...");
                 mCodecConfigured = true;
             }
 
@@ -74,7 +74,7 @@ public class VideoDecoder {
             } catch (Throwable t) {
                 AppLog.e(t);
             }
-            AppLog.i("Codec started");
+            AppLog.d("Codec started");
         }
     }
 
@@ -87,7 +87,7 @@ public class VideoDecoder {
             mInputBuffers = null;
             mCodecBufferInfo = null;
             mCodecConfigured = false;
-            AppLog.i("Reason: " + reason);
+            AppLog.d("Reason: " + reason);
         }
     }
 
@@ -130,9 +130,9 @@ public class VideoDecoder {
             if (index >= 0)
                 mCodec.releaseOutputBuffer (index, true /*render*/);           // Return the buffer to the codec
             else if (index == MediaCodec.INFO_OUTPUT_BUFFERS_CHANGED)         // See this 1st shortly after start. API >= 21: Ignore as getOutputBuffers() deprecated
-                AppLog.i("INFO_OUTPUT_BUFFERS_CHANGED");
+                AppLog.d("INFO_OUTPUT_BUFFERS_CHANGED");
             else if (index == MediaCodec.INFO_OUTPUT_FORMAT_CHANGED)          // See this 2nd shortly after start. Output format changed for subsequent data. See getOutputFormat()
-                AppLog.i("INFO_OUTPUT_FORMAT_CHANGED");
+                AppLog.d("INFO_OUTPUT_FORMAT_CHANGED");
             else if (index == MediaCodec.INFO_TRY_AGAIN_LATER) {
                 break;
             }
@@ -146,7 +146,7 @@ public class VideoDecoder {
     public void onSurfaceHolderAvailable(SurfaceHolder holder, int width, int height) {
         synchronized (sLock) {
             if (mCodec != null) {
-                AppLog.i("Codec is running");
+                AppLog.d("Codec is running");
                 return;
             }
         }

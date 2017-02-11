@@ -51,7 +51,7 @@ public class ProjectionView extends SurfaceView implements SurfaceHolder.Callbac
 
     @Override
     public void surfaceCreated(SurfaceHolder holder) {
-        AppLog.i("holder " + holder);
+        AppLog.d("holder " + holder);
         if (mSurfaceCallback != null) {
             mSurfaceCallback.surfaceCreated(holder);
         }
@@ -59,7 +59,7 @@ public class ProjectionView extends SurfaceView implements SurfaceHolder.Callbac
 
     @Override
     public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) {
-        AppLog.i("holder %s, format: %d, width: %d, height: %d", holder, format, width, height);
+        AppLog.d("holder %s, format: %d, width: %d, height: %d", holder, format, width, height);
         mVideoDecoder.onSurfaceHolderAvailable(holder, width, height);
         if (mSurfaceCallback != null) {
             mSurfaceCallback.surfaceChanged(holder, format, width, height);
@@ -68,7 +68,7 @@ public class ProjectionView extends SurfaceView implements SurfaceHolder.Callbac
 
     @Override
     public void surfaceDestroyed(SurfaceHolder holder) {
-        AppLog.i("holder " + holder);
+        AppLog.d("holder " + holder);
         mVideoDecoder.stop("surfaceDestroyed");
         if (mSurfaceCallback != null) {
             mSurfaceCallback.surfaceDestroyed(holder);

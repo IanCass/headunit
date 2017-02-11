@@ -25,7 +25,7 @@ class AudioTrackWrapper {
         int dataFormat = bitDepth == 16 ? AudioFormat.ENCODING_PCM_16BIT : AudioFormat.ENCODING_PCM_8BIT;
         int bufferSize = AudioBuffer.getSize(sampleRateInHz, channelConfig, dataFormat, pcmFrameSize);
 
-        AppLog.i("Audio stream: " + stream + " buffer size: " + bufferSize + " sampleRateInHz: " + sampleRateInHz + " channelCount: " + channelCount);
+        AppLog.d("Audio stream: " + stream + " buffer size: " + bufferSize + " sampleRateInHz: " + sampleRateInHz + " channelCount: " + channelCount);
 
         return new AudioTrack(stream, sampleRateInHz,channelConfig, dataFormat, bufferSize, AudioTrack.MODE_STREAM);
     }

@@ -41,9 +41,9 @@ class AapSsl {
 
     static ByteArray bioRead() {
         int size = native_ssl_bio_read(0, Messages.DEF_BUFFER_LENGTH, bio_read);
-        AppLog.i("SSL BIO read: %d", size);
+        AppLog.d("SSL BIO read: %d", size);
         if (size <= 0) {
-            AppLog.i("SSL BIO read error");
+            AppLog.d("SSL BIO read error");
             return null;
         }
         return new ByteArray(bio_read, size);

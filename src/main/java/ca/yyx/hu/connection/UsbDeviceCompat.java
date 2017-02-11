@@ -99,7 +99,7 @@ public class UsbDeviceCompat {
             Class<?> c = Class.forName("android.hardware.usb.UsbDeviceCompat");
             java.lang.reflect.Method get = c.getMethod("getManufacturerName");
             ret = (String) get.invoke(device);
-            AppLog.i("ret: " + ret);
+            AppLog.d("ret: " + ret);
         } catch (Throwable t) {
             AppLog.e("Throwable t: " + t);
         }
@@ -113,7 +113,7 @@ public class UsbDeviceCompat {
             Class<?> c = Class.forName("android.hardware.usb.UsbDeviceCompat");
             java.lang.reflect.Method get = c.getMethod("getProductName");
             ret = (String) get.invoke(device);
-            AppLog.i("ret: " + ret);
+            AppLog.d("ret: " + ret);
         } catch (Throwable t) {
             AppLog.e("Throwable t: " + t);
         }
@@ -127,7 +127,7 @@ public class UsbDeviceCompat {
             Class<?> c = Class.forName("android.hardware.usb.UsbDeviceCompat");
             java.lang.reflect.Method get = c.getMethod("getSerialNumber");
             ret = (String) get.invoke(device);
-            AppLog.i("ret: " + ret);
+            AppLog.d("ret: " + ret);
         } catch (Throwable t) {
             AppLog.e("Throwable t: " + t);
         }

@@ -211,7 +211,7 @@ public class Messages {
             bluetooth.bluetoothService.supportedPairingMethods = new int[] { 4 };
             services.add(bluetooth);
         } else {
-            AppLog.i("BT MAC Address is null. Skip bluetooth service");
+            AppLog.d("BT MAC Address is null. Skip bluetooth service");
         }
 
         carInfo.services = services.toArray(new Service[0]);

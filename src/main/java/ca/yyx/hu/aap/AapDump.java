@@ -78,7 +78,7 @@ class AapDump {
 //        if (lft != 0 || rmv != len || rmv < 0)                              // If content left... (must be malformed)
 //            AppLog.e ("hu_aad_dmp after content len: %d  lft: %d  rmv: %d  buf: %p", len, lft, rmv, buf);
 
-        AppLog.i("--------------------------------------------------------");  // Empty line / 56 characters
+        AppLog.d("--------------------------------------------------------");  // Empty line / 56 characters
 
         return (rmv);
     }

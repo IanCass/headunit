@@ -26,8 +26,8 @@ public class BootCompleteReceiver extends BroadcastReceiver {
     @Override
     public void onReceive(final Context context, Intent intent) {
 
-        AppLog.i("Boot Complete!");
-        AppLog.i("Launching GpsLocationService");
+        AppLog.d("Boot Complete!");
+        AppLog.d("Launching GpsLocationService");
         Handler h = new Handler();
         h.postDelayed(new Runnable() {
             @Override
@@ -37,7 +37,7 @@ public class BootCompleteReceiver extends BroadcastReceiver {
         }, 10000);
 
         // Enumerate USB Devices
-        AppLog.i("Enumerating USB devices on boot");
+        AppLog.d("Enumerating USB devices on boot");
         UsbManager manager = (UsbManager)context.getSystemService(Context.USB_SERVICE);
         HashMap<String, UsbDevice> deviceList = manager.getDeviceList();
         Iterator<UsbDevice> deviceIterator = deviceList.values().iterator();
@@ -63,17 +63,17 @@ public class BootCompleteReceiver extends BroadcastReceiver {
             UsbDeviceCompat deviceCompat = new UsbDeviceCompat(device);
             Settings settings = new Settings(context);
             if (!settings.isConnectingDevice(deviceCompat)) {
-                AppLog.i("Skipping device " + deviceCompat.getUniqueName());
+                AppLog.d("Skipping device " + deviceCompat.getUniqueName());
                 continue;
             }
 
             UsbManager usbManager = (UsbManager)context.getSystemService(Context.USB_SERVICE);
             UsbModeSwitch usbMode = new UsbModeSwitch(usbManager);
-            AppLog.i("Switching USB device to accessory mode " + deviceCompat.getUniqueName());
+            AppLog.d("Switching USB device to accessory mode " + deviceCompat.getUniqueName());
             if (usbMode.switchMode(device)) {
-                AppLog.i("Successfully switched mode " + deviceCompat.getUniqueName());
+                AppLog.d("Successfully switched mode " + deviceCompat.getUniqueName());
             } else {
-                AppLog.i("Failed to switch mode " + deviceCompat.getUniqueName());
+                AppLog.d("Failed to switch mode " + deviceCompat.getUniqueName());
             }
 
         }

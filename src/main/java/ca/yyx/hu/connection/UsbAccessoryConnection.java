@@ -88,7 +88,7 @@ public class UsbAccessoryConnection implements AccessoryConnection
             throw new UsbOpenException(e);
         }
 
-        AppLog.i("Established connection: " + mUsbDeviceConnection);
+        AppLog.d("Established connection: " + mUsbDeviceConnection);
 
         try {
             int iface_cnt = device.getInterfaceCount();
@@ -96,7 +96,7 @@ public class UsbAccessoryConnection implements AccessoryConnection
                 AppLog.e("iface_cnt: " + iface_cnt);
                 throw new UsbOpenException("No usb interfaces");
             }
-            AppLog.i("iface_cnt: " + iface_cnt);
+            AppLog.d("iface_cnt: " + iface_cnt);
             mUsbInterface = device.getInterface(0);                            // java.lang.ArrayIndexOutOfBoundsException: length=0; index=0
 
             if (!mUsbDeviceConnection.claimInterface(mUsbInterface, true)) {        // Claim interface, if error...   true = take from kernel
@@ -109,7 +109,7 @@ public class UsbAccessoryConnection implements AccessoryConnection
     }
 
     private int acc_mode_endpoints_set() {                               // Set Accessory mode Endpoints. Called only by usb_connect()
-        AppLog.i("Check accessory endpoints");
+        AppLog.d("Check accessory endpoints");
         mEndpointIn = null;                                               // Setup bulk endpoints.
         mEndpointOut = null;
 
@@ -131,14 +131,14 @@ public class UsbAccessoryConnection implements AccessoryConnection
             return (-1);                                                      // Done error
         }
 
-        AppLog.i("Connected have EPs");
+        AppLog.d("Connected have EPs");
         return (0);                                                         // Done success
     }
 
     public void disconnect() {                                           // Release interface and close USB device connection. Called only by usb_disconnect()
         synchronized (sLock) {
             if (mUsbDeviceConnected != null) {
-                AppLog.i(mUsbDeviceConnected.toString());
+                AppLog.d(mUsbDeviceConnected.toString());
             }
             mEndpointIn = null;                                               // Input  EP
             mEndpointOut = null;                                               // Output EP
@@ -149,7 +149,7 @@ public class UsbAccessoryConnection implements AccessoryConnection
                     bret = mUsbDeviceConnection.releaseInterface(mUsbInterface);
                 }
                 if (bret) {
-                    AppLog.i("OK releaseInterface()");
+                    AppLog.d("OK releaseInterface()");
                 } else {
                     AppLog.e("Error releaseInterface()");
                 }

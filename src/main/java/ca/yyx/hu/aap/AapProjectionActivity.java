@@ -105,7 +105,7 @@ public class AapProjectionActivity extends SurfaceActivity implements SurfaceHol
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        AppLog.i("Headunit for Android Auto (tm) - Copyright 2011-2015 Michael A. Reid. All Rights Reserved...");
+        AppLog.d("Headunit for Android Auto (tm) - Copyright 2011-2015 Michael A. Reid. All Rights Reserved...");
 
         mProjectionView = (ProjectionView) findViewById(R.id.surface);
         mProjectionView.setSurfaceCallback(this);
@@ -189,7 +189,7 @@ public class AapProjectionActivity extends SurfaceActivity implements SurfaceHol
 
     @Override
     public boolean onKeyDown(int keyCode, KeyEvent event) {
-        AppLog.i("KeyCode: %d", keyCode);
+        AppLog.d("KeyCode: %d", keyCode);
         onKeyEvent(keyCode, true);
 
         return super.onKeyDown(keyCode, event);
@@ -197,7 +197,7 @@ public class AapProjectionActivity extends SurfaceActivity implements SurfaceHol
 
     @Override
     public boolean onKeyUp(int keyCode, KeyEvent event) {
-        AppLog.i("KeyCode: %d", keyCode);
+        AppLog.d("KeyCode: %d", keyCode);
         Utils.ms_sleep(100);
         onKeyEvent(keyCode, false);
         return super.onKeyUp(keyCode, event);

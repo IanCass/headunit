@@ -34,7 +34,7 @@ public class MicRecorder {
     }
 
     public void stop() {
-        AppLog.i("thread_mic_audio: " + thread_mic_audio + "  thread_mic_audio_active: " + thread_mic_audio_active);
+        AppLog.d("thread_mic_audio: " + thread_mic_audio + "  thread_mic_audio_active: " + thread_mic_audio_active);
         if (thread_mic_audio_active) {
             thread_mic_audio_active = false;
             if (thread_mic_audio != null) {

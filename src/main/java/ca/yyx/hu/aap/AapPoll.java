@@ -128,7 +128,7 @@ class AapPoll {
             have_len -= recv_header.enc_len;
             body_start += recv_header.enc_len;
             if (have_len != 0) {
-                AppLog.i("iaap_recv_dec_process() more than one message have_len: %d  enc_len: %d", have_len, recv_header.enc_len);
+                AppLog.d("iaap_recv_dec_process() more than one message have_len: %d  enc_len: %d", have_len, recv_header.enc_len);
             }
 
         }

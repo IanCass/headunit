@@ -26,7 +26,7 @@ public class UsbAttachedActivity extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        AppLog.i("USB Intent: " + getIntent());
+        AppLog.d("USB Intent: " + getIntent());
 
         UsbDevice device = LocalIntent.deviceFromIntent(getIntent());
         if (device == null) {
@@ -51,18 +51,18 @@ public class UsbAttachedActivity extends Activity {
         UsbDeviceCompat deviceCompat = new UsbDeviceCompat(device);
         Settings settings = new Settings(this);
         if (!settings.isConnectingDevice(deviceCompat)) {
-            AppLog.i("Skipping device " + deviceCompat.getUniqueName());
+            AppLog.d("Skipping device " + deviceCompat.getUniqueName());
             finish();
             return;
         }
 
         UsbManager usbManager = (UsbManager) getSystemService(Context.USB_SERVICE);
         UsbModeSwitch usbMode = new UsbModeSwitch(usbManager);
-        AppLog.i("Switching USB device to accessory mode " + deviceCompat.getUniqueName());
+        AppLog.d("Switching USB device to accessory mode " + deviceCompat.getUniqueName());
         if (usbMode.switchMode(device)) {
-            AppLog.i("Successfully switched mode " + deviceCompat.getUniqueName());
+            AppLog.d("Successfully switched mode " + deviceCompat.getUniqueName());
         } else {
-            AppLog.i("Failed to switch mode " + deviceCompat.getUniqueName());
+            AppLog.d("Failed to switch mode " + deviceCompat.getUniqueName());
         }
 
 
@@ -80,7 +80,7 @@ public class UsbAttachedActivity extends Activity {
             return;
         }
 
-        AppLog.i(UsbDeviceCompat.getUniqueName(device));
+        AppLog.d(UsbDeviceCompat.getUniqueName(device));
 
         if (!App.get(this).transport().isAlive()) {
             if (UsbDeviceCompat.isInAccessoryMode(device)) {

@@ -63,7 +63,7 @@ class AapAudio implements AudioManager.OnAudioFocusChangeListener {
     }
 
     void stopAudio(int chan) {
-        AppLog.i("Audio Stop: " + chan);
+        AppLog.d("Audio Stop: " + chan);
         mAudioDecoder.stop(chan);
     }
 
@@ -73,16 +73,16 @@ class AapAudio implements AudioManager.OnAudioFocusChangeListener {
         switch (focusChange)
         {
             case AudioManager.AUDIOFOCUS_LOSS:
-                AppLog.i("LOSS");
+                AppLog.d("LOSS");
                 break;
             case AudioManager.AUDIOFOCUS_LOSS_TRANSIENT:
-                AppLog.i("LOSS TRANSIENT");
+                AppLog.d("LOSS TRANSIENT");
                 break;
             case AudioManager.AUDIOFOCUS_GAIN:
-                AppLog.i("GAIN");
+                AppLog.d("GAIN");
                 break;
             case AudioManager.AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK:
-                AppLog.i("LOSS TRANSIENT CAN DUCK");
+                AppLog.d("LOSS TRANSIENT CAN DUCK");
                 break;
         }
 

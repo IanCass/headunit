@@ -206,17 +206,17 @@ public class AapService extends Service implements UsbReceiver.Listener, Accesso
 
         @Override
         public void onCommand(String command, Bundle extras, ResultReceiver cb) {
-            AppLog.i(command);
+            AppLog.d(command);
         }
 
         @Override
         public void onCustomAction(String action, Bundle extras) {
-            AppLog.i(action);
+            AppLog.d(action);
         }
 
         @Override
         public void onSkipToNext() {
-            AppLog.i("onSkipToNext");
+            AppLog.d("onSkipToNext");
 
             App.get(mContext).transport().sendButton(KeyEvent.KEYCODE_MEDIA_NEXT, true);
             Utils.ms_sleep(10);
@@ -225,7 +225,7 @@ public class AapService extends Service implements UsbReceiver.Listener, Accesso
 
         @Override
         public void onSkipToPrevious() {
-            AppLog.i("onSkipToPrevious");
+            AppLog.d("onSkipToPrevious");
 
             App.get(mContext).transport().sendButton(KeyEvent.KEYCODE_MEDIA_PREVIOUS, true);
             Utils.ms_sleep(10);
@@ -234,7 +234,7 @@ public class AapService extends Service implements UsbReceiver.Listener, Accesso
 
         @Override
         public void onPlay() {
-            AppLog.i("PLAY");
+            AppLog.d("PLAY");
 
             App.get(mContext).transport().sendButton(KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE, true);
             Utils.ms_sleep(10);
@@ -243,7 +243,7 @@ public class AapService extends Service implements UsbReceiver.Listener, Accesso
 
         @Override
         public boolean onMediaButtonEvent(Intent mediaButtonEvent) {
-            AppLog.i(mediaButtonEvent.toString());
+            AppLog.d(mediaButtonEvent.toString());
             return super.onMediaButtonEvent(mediaButtonEvent);
         }
     }
@@ -288,7 +288,7 @@ public class AapService extends Service implements UsbReceiver.Listener, Accesso
                 mLastNightMode = isCurrent;
 
                 mUiModeManager.setNightMode(isCurrent ? UiModeManager.MODE_NIGHT_YES : UiModeManager.MODE_NIGHT_NO);
-                AppLog.i(mNightMode.toString());
+                AppLog.d(mNightMode.toString());
                 App.get(mContext).transport().sendNightMode(isCurrent);
             }
         }

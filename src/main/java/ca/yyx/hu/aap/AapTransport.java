@@ -100,7 +100,7 @@ public class AapTransport implements Handler.Callback, MicRecorder.Listener {
     }
 
     void quit() {
-        AppLog.i("AA has quit!");
+        AppLog.d("AA has quit!");
         mMicRecorder.setListener(null);
         mPollThread.quit();
         mAapPoll = null;
@@ -108,7 +108,7 @@ public class AapTransport implements Handler.Callback, MicRecorder.Listener {
     }
 
     boolean connectAndStart(AccessoryConnection connection) {
-        AppLog.i("Start Aap transport for " + connection);
+        AppLog.d("Start Aap transport for " + connection);
 
         if (!handshake(connection)) {
             AppLog.e("Handshake failed");
@@ -142,7 +142,7 @@ public class AapTransport implements Handler.Callback, MicRecorder.Listener {
             AppLog.e("Version request recv ret: " + ret);
             return false;
         }
-        AppLog.i("Version response recv ret: %d", ret);
+        AppLog.d("Version response recv ret: %d", ret);
 
         // SSL
         ret = AapSsl.prepare();
@@ -164,17 +164,17 @@ public class AapTransport implements Handler.Callback, MicRecorder.Listener {
 
             byte[] bio = Messages.createRawMessage(Channel.ID_CTR, 3, 3, ba.data, ba.length);
             int size = connection.send(bio, bio.length, 1000);
-            AppLog.i("SSL BIO sent: %d", size);
+            AppLog.d("SSL BIO sent: %d", size);
 
             size = connection.recv(buffer, buffer.length, 1000);
-            AppLog.i("SSL received: %d", size);
+            AppLog.d("SSL received: %d", size);
             if (size <= 0) {
-                AppLog.i("SSL receive error");
+                AppLog.d("SSL receive error");
                 return false;
             }
 
             ret = AapSsl.bioWrite(6, size - 6, buffer);
-            AppLog.i("SSL BIO write: %d", ret);
+            AppLog.d("SSL BIO write: %d", ret);
         }
 
         // Status = OK
@@ -186,7 +186,7 @@ public class AapTransport implements Handler.Callback, MicRecorder.Listener {
             return false;
         }
 
-        AppLog.i("Status OK sent: %d", ret);
+        AppLog.d("Status OK sent: %d", ret);
 
         return true;
     }
@@ -203,7 +203,7 @@ public class AapTransport implements Handler.Callback, MicRecorder.Listener {
 
         if (aapKeyCode == KeyEvent.KEYCODE_UNKNOWN)
         {
-            AppLog.i("Unknown: " + keyCode);
+            AppLog.d("Unknown: " + keyCode);
         }
 
         if (aapKeyCode == KeyEvent.KEYCODE_DPAD_LEFT || keyCode == KeyEvent.KEYCODE_DPAD_RIGHT)
@@ -241,12 +241,12 @@ public class AapTransport implements Handler.Callback, MicRecorder.Listener {
     }
 
     void sendVideoFocusGained(boolean unsolicited) {
-        AppLog.i("Gain video focus notification");
+        AppLog.d("Gain video focus notification");
         send(Messages.createVideoFocus(1, unsolicited));
     }
 
     void sendVideoFocusLost() {
-        AppLog.i("Lost video focus notification");
+        AppLog.d("Lost video focus notification");
         send(Messages.createVideoFocus(2, true));
     }
 
