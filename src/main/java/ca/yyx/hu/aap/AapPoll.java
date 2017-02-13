@@ -2,6 +2,11 @@ package ca.yyx.hu.aap;
 
 import com.google.protobuf.nano.InvalidProtocolBufferNanoException;
 
+import java.nio.BufferOverflowException;
+import java.nio.BufferUnderflowException;
+import java.nio.ByteBuffer;
+import java.util.Arrays;
+
 import ca.yyx.hu.aap.protocol.Channel;
 import ca.yyx.hu.aap.protocol.MsgType;
 import ca.yyx.hu.connection.AccessoryConnection;
@@ -21,6 +26,8 @@ class AapPoll {
     private final AapTransport mTransport;
 
     private byte[] recv_buffer = new byte[Messages.DEF_BUFFER_LENGTH];
+    private ByteBuffer fifo = ByteBuffer.allocate(Messages.DEF_BUFFER_LENGTH * 2);
+
     private final Header recv_header = new Header();
 
     private final AapAudio mAapAudio;
@@ -36,135 +43,91 @@ class AapPoll {
     }
 
     int poll() {
+
+        byte[] header = new byte[4];
+
         if (mConnection == null) {
             AppLog.e("Error: No connection.");
             return -1;
         }
 
-        if (mConnection.isSingleMessage()) {
-            int header_size = mConnection.recv(recv_buffer, Header.SIZE, 150);
-            if (header_size != Header.SIZE) {
-                AppLog.v("Header: recv %d", header_size);
-                return -1;
-            }
-
-            recv_header.decode(0, recv_buffer);
-
-            int msg_size = mConnection.recv(recv_buffer, recv_header.enc_len, 150);
-            if (msg_size != recv_header.enc_len) {
-                AppLog.v("Message: recv %d", msg_size);
-                return -1;
-            }
-
-            try {
-                return processSingle(recv_header, 0, recv_buffer);
-            } catch (InvalidProtocolBufferNanoException e) {
-                AppLog.e(e);
-                return -1;
-            }
-        }
-
+        // receive bulk data
         int size = mConnection.recv(recv_buffer, recv_buffer.length, 150);
         if (size <= 0) {
-//            AppLog.v("recv %d", size);
+            AppLog.d("recv <= zero %d", size);
             return 0;
         }
+
+        // move bytebuffer
+        fifo.put(recv_buffer, fifo.position(), size);
+
+        // read the data we've just read
+        fifo.flip();
+
         try {
-            processBulk(size, recv_buffer);
+            while (fifo.hasRemaining()) {
+
+                // preview the header
+                fifo.get(header, 0, 4);
+
+                // Decode the header
+                int enc_len = recv_header.decode(header);
+
+                // hack?
+                if (recv_header.chan == Channel.ID_VID && recv_header.flags == 9) {
+                    fifo.position(fifo.position() + 4);
+                }
+
+                // Retrieve the entire message now we know the length
+                byte[] buf = new byte[enc_len];
+                fifo.get(buf, 0, buf.length);
+
+                AapMessage msg = decryptMessage(recv_header, buf);
+
+                // Decrypt & Process 1 received encrypted message
+                if (msg == null) {
+                    // If error...
+                    AppLog.e("Error iaap_recv_dec_process: enc_len: %d chan: %d %s flags: %01x", buf.length, recv_header.chan, Channel.name(recv_header.chan), recv_header.flags);
+                    return -1;
+                }
+                iaap_msg_process(msg);
+            }
+        } catch (BufferUnderflowException e) {
+            // Not enough bytes. ignore.
         } catch (InvalidProtocolBufferNanoException e) {
+            // erk!
             AppLog.e(e);
             return -1;
         }
+        // Prepare for next write
+        fifo.compact();
+
         return 0;
     }
 
-    private int processSingle(Header header, int offset, byte[] buf) throws InvalidProtocolBufferNanoException {
-        AapMessage msg = decryptMessage(header, offset, buf);
+    private AapMessage decryptMessage(Header header, byte[] buf) {
         // Decrypt & Process 1 received encrypted message
-        if (msg == null) {
-            // If error...
-            AppLog.e("Error iaap_recv_dec_process: enc_len: %d chan: %d %s flags: %01x msg_type: %d", header.enc_len, header.chan, Channel.name(header.chan), header.flags, header.msg_type);
-            return -1;
-        }
-
-        iaap_msg_process(msg);
-        return 0;
-    }
-
-    private RecvProcessResult processBulk(int buf_len, byte[] buf) throws InvalidProtocolBufferNanoException {
-
-        int body_start = 0;
-        int have_len = buf_len;
-
-        while (have_len > 0) {
-            int msg_start = body_start;
-            recv_header.decode(body_start, buf);
-
-            // Length starting at byte 4: Unencrypted Message Type or Encrypted data start
-            have_len -= 4;
-            body_start +=4;
-
-            if (recv_header.chan == Channel.ID_VID && recv_header.flags == 9) {
-                have_len -= 4;
-            }
-
-            int need_len = recv_header.enc_len - have_len;
-            if (need_len > 0) {
-                AppLog.e("Need more - offset: %d, msg_start: %d, enc_len: %d. need_len: %d, buf_len: %d, buf_limit: %d",
-                        body_start + have_len, // 6436
-                        msg_start, // 4
-                        recv_header.enc_len, // 26816
-                        need_len, // 20384
-                        buf_len, // 6436
-                        buf.length); // 131080
-
-
-                return RecvProcessResult.NeedMore
-                        .setNeedMore(msg_start, have_len, need_len);
-            }
-
-            processSingle(recv_header, body_start, buf);
-
-            have_len -= recv_header.enc_len;
-            body_start += recv_header.enc_len;
-            if (have_len != 0) {
-                AppLog.d("iaap_recv_dec_process() more than one message have_len: %d  enc_len: %d", have_len, recv_header.enc_len);
-            }
-
-        }
-
-        return RecvProcessResult.Ok;
-    }
-
-    private AapMessage decryptMessage(Header header, int offset, byte[] buf) {
-        // Decrypt & Process 1 received encrypted message
+        int offset = 0;
 
         if ((header.flags & 0x08) != 0x08) {
-            AppLog.e("WRONG FLAG: enc_len: %d  chan: %d %s flags: 0x%02x  msg_type: 0x%02x %s",
-                    header.enc_len, header.chan, Channel.name(header.chan), header.flags, header.msg_type, MsgType.name(header.msg_type, header.chan));
+            AppLog.e("WRONG FLAG: enc_len: %d  chan: %d %s flags: 0x%02x",
+                    buf.length, header.chan, Channel.name(header.chan), header.flags);
             return null;
         }
-        if (header.chan == Channel.ID_VID && header.flags == 9) {
-            // If First fragment Video...
-            // (Packet is encrypted so we can't get the real msg_type or check for 0, 0, 0, 1)
-            int total_size = Utils.bytesToInt(buf, offset, false);
-            AppLog.v("First fragment total_size: %d", total_size);
-            offset += 4;
-        }
 
-        ByteArray ba = AapSsl.decrypt(offset, header.enc_len, buf);
+        ByteArray ba = AapSsl.decrypt(offset, buf.length, buf);
         if (ba == null) {
             return null;
         }
 
         int msg_type = Utils.bytesToInt(ba.data, 0, true);
+
         AapMessage msg = new AapMessage(header.chan, (byte) header.flags, msg_type, 2, ba.length, ba.data);
 
-        if (AppLog.LOG_VERBOSE)
-        {
-            AppLog.d("RECV: " ,msg.toString());
+        if (AppLog.LOG_VERBOSE) {
+            AppLog.d("RECV: ", msg.toString());
         }
-         return msg;
+        return msg;
     }
 
     private int iaap_msg_process(AapMessage message) throws InvalidProtocolBufferNanoException {
@@ -188,30 +151,22 @@ class AapPoll {
         return 0;
     }
 
-    private static class Header
-    {
-        final static int SIZE = 6;
+    private static class Header {
+        final static int SIZE = 4;
 
         int chan;
         int flags;
-        int enc_len;
-        int msg_type;
 
-        void decode(int offset, byte[] buf) {
-            this.chan = (int) buf[offset];
-            this.flags = buf[offset + 1];
+        int decode(byte[] buf) {
 
-            // Encoded length of bytes to be decrypted (minus 4/8 byte headers)
-            this.enc_len = Utils.bytesToInt(buf, offset + 2, true);
-
-            // Message Type (or post handshake, mostly indicator of SSL encrypted data)
-            this.msg_type = Utils.bytesToInt(buf, offset + 4, true);
+            this.chan = (int) buf[0];
+            this.flags = buf[1];
+            return Utils.bytesToInt(buf, 2, true); // Encoded length of bytes to be decrypted (minus 4/8 byte headers)
         }
 
     }
 
-    private static class RecvProcessResult
-    {
+    private static class RecvProcessResult {
         static final RecvProcessResult Error = new RecvProcessResult(-1);
         static final RecvProcessResult Ok = new RecvProcessResult(0);
         static final RecvProcessResult NeedMore = new RecvProcessResult(1);
