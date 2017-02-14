@@ -25,8 +25,9 @@ class AapPoll {
     private final AccessoryConnection mConnection;
     private final AapTransport mTransport;
 
-    private byte[] recv_buffer = new byte[Messages.DEF_BUFFER_LENGTH];
-    private ByteBuffer fifo = ByteBuffer.allocate(Messages.DEF_BUFFER_LENGTH * 2);
+    private byte[] recv_buffer;
+    private ByteBuffer fifo = ByteBuffer.allocate(1024 * 256); //256k
+    byte[] buf = new byte[Short.MAX_VALUE];
 
     private final Header recv_header = new Header();
 
@@ -40,11 +41,12 @@ class AapPoll {
         mAapVideo = aapVideo;
         mTransport = transport;
         mAapControl = new AapControl(transport, recorder, mAapAudio, btMacAddress);
+        recv_buffer = new byte[mConnection.bufferSize()];
     }
 
     int poll() {
 
-        byte[] header = new byte[4];
+        byte[] header = new byte[Header.SIZE];
 
         if (mConnection == null) {
             AppLog.e("Error: No connection.");
@@ -58,42 +60,39 @@ class AapPoll {
             return 0;
         }
 
-        // move bytebuffer
+        // move the data we've read into the bytebuffer
         fifo.put(recv_buffer, fifo.position(), size);
-
-        // read the data we've just read
         fifo.flip();
 
         try {
             while (fifo.hasRemaining()) {
 
-                // preview the header
+                // Parse the header
                 fifo.get(header, 0, 4);
+                recv_header.decode(header);
 
-                // Decode the header
-                int enc_len = recv_header.decode(header);
-
-                // hack?
+                // hack because these message types have 8 byte headers
                 if (recv_header.chan == Channel.ID_VID && recv_header.flags == 9) {
                     fifo.position(fifo.position() + 4);
                 }
 
                 // Retrieve the entire message now we know the length
-                byte[] buf = new byte[enc_len];
-                fifo.get(buf, 0, buf.length);
-
-                AapMessage msg = decryptMessage(recv_header, buf);
+                fifo.get(buf, 0, recv_header.enc_len);
 
                 // Decrypt & Process 1 received encrypted message
+                AapMessage msg = decryptMessage(recv_header, buf);
                 if (msg == null) {
                     // If error...
                     AppLog.e("Error iaap_recv_dec_process: enc_len: %d chan: %d %s flags: %01x", buf.length, recv_header.chan, Channel.name(recv_header.chan), recv_header.flags);
                     return -1;
                 }
+
+                // process the message
                 iaap_msg_process(msg);
             }
         } catch (BufferUnderflowException e) {
             // Not enough bytes. ignore.
+            AppLog.e(e);
         } catch (InvalidProtocolBufferNanoException e) {
             // erk!
             AppLog.e(e);
@@ -111,11 +110,11 @@ class AapPoll {
 
         if ((header.flags & 0x08) != 0x08) {
             AppLog.e("WRONG FLAG: enc_len: %d  chan: %d %s flags: 0x%02x",
-                    buf.length, header.chan, Channel.name(header.chan), header.flags);
+                    header.enc_len, header.chan, Channel.name(header.chan), header.flags);
             return null;
         }
 
-        ByteArray ba = AapSsl.decrypt(offset, buf.length, buf);
+        ByteArray ba = AapSsl.decrypt(offset, header.enc_len, buf);
         if (ba == null) {
             return null;
         }
@@ -156,12 +155,13 @@ class AapPoll {
 
         int chan;
         int flags;
+        int enc_len;
 
-        int decode(byte[] buf) {
+        void decode(byte[] buf) {
 
             this.chan = (int) buf[0];
             this.flags = buf[1];
-            return Utils.bytesToInt(buf, 2, true); // Encoded length of bytes to be decrypted (minus 4/8 byte headers)
+            this.enc_len = Utils.bytesToInt(buf, 2, true); // Encoded length of bytes to be decrypted (minus 4/8 byte headers)
         }
 
     }

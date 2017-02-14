@@ -4,9 +4,7 @@ package ca.yyx.hu.connection;
 import android.support.annotation.NonNull;
 
 import java.io.BufferedInputStream;
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 
@@ -25,6 +23,11 @@ public class SocketAccessoryConnection implements AccessoryConnection {
     public SocketAccessoryConnection(String ip) {
         mSocket = new Socket();
         mIp = ip;
+    }
+
+    @Override
+    public int bufferSize() {
+        return DEF_BUFFER_LENGTH;
     }
 
     @Override

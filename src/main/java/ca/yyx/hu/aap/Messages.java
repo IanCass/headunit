@@ -2,17 +2,15 @@ package ca.yyx.hu.aap;
 
 import java.util.ArrayList;
 
-import ca.yyx.hu.aap.AapMessage;
 import ca.yyx.hu.aap.protocol.AudioConfigs;
 import ca.yyx.hu.aap.protocol.Channel;
 import ca.yyx.hu.aap.protocol.MsgType;
-import ca.yyx.hu.utils.AppLog;
-
 import ca.yyx.hu.aap.protocol.nano.Protocol;
 import ca.yyx.hu.aap.protocol.nano.Protocol.Service;
-import ca.yyx.hu.aap.protocol.nano.Protocol.Service.SensorSourceService;
-import ca.yyx.hu.aap.protocol.nano.Protocol.Service.MediaSinkService.VideoConfiguration;
 import ca.yyx.hu.aap.protocol.nano.Protocol.Service.InputSourceService.TouchConfig;
+import ca.yyx.hu.aap.protocol.nano.Protocol.Service.MediaSinkService.VideoConfiguration;
+import ca.yyx.hu.aap.protocol.nano.Protocol.Service.SensorSourceService;
+import ca.yyx.hu.utils.AppLog;
 import ca.yyx.hu.utils.Utils;
 
 /**
@@ -21,8 +19,7 @@ import ca.yyx.hu.utils.Utils;
  */
 
 public class Messages {
-    static final int DEF_BUFFER_LENGTH = 131080;
-
+    static final int DEF_BUFFER_LENGTH = 1024 * 256;
 
     static byte[] createRawMessage(int chan, int flags, int type, byte[] data, int size) {
 
@@ -38,8 +35,7 @@ public class Messages {
         return buffer;
     }
 
-    static AapMessage createVideoFocus(int mode, boolean unsolicited)
-    {
+    static AapMessage createVideoFocus(int mode, boolean unsolicited) {
         Protocol.VideoFocusNotification videoFocus = new Protocol.VideoFocusNotification();
         videoFocus.mode = mode;
         videoFocus.unsolicited = unsolicited;
@@ -47,8 +43,7 @@ public class Messages {
         return new AapMessage(Channel.ID_VID, MsgType.Media.VIDEOFOCUSNOTIFICATION, videoFocus);
     }
 
-    static AapMessage createKeyEvent(long timeStamp, int keycode, boolean isPress)
-    {
+    static AapMessage createKeyEvent(long timeStamp, int keycode, boolean isPress) {
         Protocol.InputReport inputReport = new Protocol.InputReport();
         Protocol.KeyEvent keyEvent = new Protocol.KeyEvent();
         // Timestamp in nanoseconds = microseconds x 1,000,000
@@ -63,8 +58,7 @@ public class Messages {
         return new AapMessage(Channel.ID_INP, MsgType.Input.EVENT, inputReport);
     }
 
-    static AapMessage createScrollEvent(long timeStamp, int delta)
-    {
+    static AapMessage createScrollEvent(long timeStamp, int delta) {
         Protocol.InputReport inputReport = new Protocol.InputReport();
         Protocol.KeyEvent keyEvent = new Protocol.KeyEvent();
         // Timestamp in nanoseconds = microseconds x 1,000,000
@@ -117,7 +111,7 @@ public class Messages {
         return new AapMessage(Channel.ID_SEN, MsgType.Sensor.EVENT, sensorBatch);
     }
 
-    static byte[] VERSION_REQUEST = { 0, 1, 0, 1 };
+    static byte[] VERSION_REQUEST = {0, 1, 0, 1};
 
     static AapMessage createServiceDiscoveryResponse(String btAddress) {
         Protocol.ServiceDiscoveryResponse carInfo = new Protocol.ServiceDiscoveryResponse();
@@ -208,7 +202,7 @@ public class Messages {
             bluetooth.id = Channel.ID_BTH;
             bluetooth.bluetoothService = new Service.BluetoothService();
             bluetooth.bluetoothService.carAddress = btAddress;
-            bluetooth.bluetoothService.supportedPairingMethods = new int[] { 4 };
+            bluetooth.bluetoothService.supportedPairingMethods = new int[]{4};
             services.add(bluetooth);
         } else {
             AppLog.d("BT MAC Address is null. Skip bluetooth service");

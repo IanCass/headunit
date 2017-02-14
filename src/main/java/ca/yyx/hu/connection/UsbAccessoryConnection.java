@@ -6,11 +6,10 @@ import android.hardware.usb.UsbDeviceConnection;
 import android.hardware.usb.UsbEndpoint;
 import android.hardware.usb.UsbInterface;
 import android.hardware.usb.UsbManager;
+import android.hardware.usb.UsbRequest;
 import android.support.annotation.NonNull;
 
-import junit.framework.Assert;
-
-import java.io.IOException;
+import java.nio.ByteBuffer;
 
 import ca.yyx.hu.utils.AppLog;
 
@@ -19,8 +18,7 @@ import ca.yyx.hu.utils.AppLog;
  * @date 29/05/2016.
  */
 
-public class UsbAccessoryConnection implements AccessoryConnection
-{
+public class UsbAccessoryConnection implements AccessoryConnection {
     private final UsbDevice mDevice;
     private UsbManager mUsbMgr;
     private UsbDeviceCompat mUsbDeviceConnected;
@@ -28,12 +26,19 @@ public class UsbAccessoryConnection implements AccessoryConnection
     private UsbInterface mUsbInterface = null;                   // USB Interface
     private UsbEndpoint mEndpointIn = null;                   // USB Input  endpoint
     private UsbEndpoint mEndpointOut = null;                   // USB Output endpoint
+    private static final int DEF_BUFFER_LENGTH = 16384;
+
 
     private static final Object sLock = new Object();
 
     public UsbAccessoryConnection(UsbManager usbMgr, UsbDevice device) {
         mUsbMgr = usbMgr;
         mDevice = device;
+    }
+
+    @Override
+    public int bufferSize() {
+        return DEF_BUFFER_LENGTH;
     }
 
     public boolean isDeviceRunning(UsbDevice device) {
@@ -169,6 +174,7 @@ public class UsbAccessoryConnection implements AccessoryConnection
     @Override
     public boolean isSingleMessage() {
         return false;
+
     }
 
     /**
@@ -191,15 +197,16 @@ public class UsbAccessoryConnection implements AccessoryConnection
         }
     }
 
+
     @Override
-    public int recv(byte[] buf,int length, int timeout) {
+    public int recv(byte[] buf, int length, int timeout) {
         synchronized (sLock) {
             if (mUsbDeviceConnected == null) {
                 AppLog.e("Not connected");
                 return -1;
             }
             try {
-                return mUsbDeviceConnection.bulkTransfer(mEndpointIn, buf, buf.length, timeout);
+                return mUsbDeviceConnection.bulkTransfer(mEndpointIn, buf, length, timeout);
             } catch (NullPointerException e) {
                 disconnect();
                 AppLog.e(e);
@@ -207,6 +214,35 @@ public class UsbAccessoryConnection implements AccessoryConnection
             }
         }
     }
+
+    /*
+    @Override
+    public int recv(byte[] dest, int length, int timeoutMillis) {
+        final UsbRequest request = new UsbRequest();
+        try {
+            request.initialize(mUsbDeviceConnection, mEndpointIn);
+            final ByteBuffer buf = ByteBuffer.wrap(dest);
+            if (!request.queue(buf, length)) {
+                return -1;
+            }
+            final UsbRequest response = mUsbDeviceConnection.requestWait();
+            if (response == null) {
+                return -1;
+            }
+
+            final int nread = buf.position();
+            //AppLog.i("Requested %d, Read = %d", length, nread);
+            if (nread > 0) {
+                //Log.d(TAG, HexDump.dumpHexString(dest, 0, Math.min(32, dest.length)));
+                return nread;
+            } else {
+                return 0;
+            }
+        } finally {
+            request.close();
+        }
+
+    }*/
 
     private class UsbOpenException extends Exception {
         UsbOpenException(String message) {
