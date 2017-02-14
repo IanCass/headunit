@@ -74,6 +74,8 @@ class AapControl {
             case MsgType.Media.MICREQUEST:
                 Protocol.MicrophoneRequest micRequest = parse(new Protocol.MicrophoneRequest(), message);
                 return mic_request(micRequest);
+            case MsgType.Media.ACK:
+                return 0;
             default:
                 AppLog.e("Unsupported");
         }
