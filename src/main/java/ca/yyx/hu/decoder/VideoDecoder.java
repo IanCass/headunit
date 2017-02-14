@@ -105,7 +105,9 @@ public class VideoDecoder {
             buffer.clear();
             if (content.remaining() <= capacity) {                           // If we can just put() the content...
                 buffer.put(content);                                           // Put the content
-            } else {                                                            // Else... (Should not happen ?)
+            } else {
+                //FIXME there be bugs here! When we hit this code, the stream stops
+                // Else... (Should not happen ?)
                 AppLog.e("content.hasRemaining (): " + content.hasRemaining() + "  capacity: " + capacity);
 
                 int limit = content.limit();

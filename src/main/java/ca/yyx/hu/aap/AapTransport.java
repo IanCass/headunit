@@ -114,7 +114,7 @@ public class AapTransport implements Handler.Callback, MicRecorder.Listener {
             AppLog.e("Handshake failed");
             return false;
         }
-
+// IAN do we need to check if it's already running?
         mConnection = connection;
 
         mAapPoll = new AapPoll(connection, this, mMicRecorder, mAapAudio, mAapVideo, mBtMacAddress);
@@ -226,6 +226,7 @@ public class AapTransport implements Handler.Callback, MicRecorder.Listener {
     void send(AapMessage message) {
         if (mHandler == null) {
             AppLog.e("Handler is null");
+            //IAN what to do here?
         } else {
             if (AppLog.LOG_VERBOSE) {
                 AppLog.v(message.toString());

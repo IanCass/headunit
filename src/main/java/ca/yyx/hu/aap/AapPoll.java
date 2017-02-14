@@ -30,9 +30,7 @@ class AapPoll {
 
     private byte[] recv_buffer;
     private ByteBuffer fifo = ByteBuffer.allocate(1024 * 256); //256k
-    byte[] buf = new byte[Short.MAX_VALUE];
-
-    private final Header recv_header = new Header();
+    byte[] buf = new byte[65535]; // unsigned short max
 
     private final AapAudio mAapAudio;
     private final AapVideo mAapVideo;
@@ -49,6 +47,7 @@ class AapPoll {
 
     int poll() {
 
+        Header recv_header = new Header();
         byte[] header = new byte[Header.SIZE];
 
         if (mConnection == null) {
@@ -57,6 +56,7 @@ class AapPoll {
         }
 
         // receive bulk data
+        //FIXME modify AccesoryConnection to read/write ByteBuffers instead of byte arrays
         int size = mConnection.recv(recv_buffer, recv_buffer.length, 150);
         if (size <= 0) {
             AppLog.d("recv <= zero %d", size);
@@ -75,7 +75,7 @@ class AapPoll {
                     fifo.get(header, 0, 4);
                 } catch (BufferUnderflowException e) {
                     // we'll come back later for more data
-                    AppLog.e("BufferUnderflowException whilst trying to read 4 bytes capacity = %d, position = %d", fifo.capacity(), fifo.position());
+                    AppLog.v("BufferUnderflowException whilst trying to read 4 bytes capacity = %d, position = %d", fifo.capacity(), fifo.position());
                     return 0;
                 }
                 recv_header.decode(header);
@@ -93,15 +93,14 @@ class AapPoll {
                     // rewind so we process the header again next time
                     AppLog.v("BufferUnderflowException whilst trying to read %d bytes limit = %d, position = %d", recv_header.enc_len, fifo.limit(), fifo.position());
                     fifo.position(fifo.position() - 4);
-                    fifo.compact();
-                    return 0;
+                    break;
                 }
 
                 // Decrypt & Process 1 received encrypted message
                 AapMessage msg = decryptMessage(recv_header, buf);
                 if (msg == null) {
                     // If error...
-                    AppLog.e("Error iaap_recv_dec_process: enc_len: %d chan: %d %s flags: %01x", buf.length, recv_header.chan, Channel.name(recv_header.chan), recv_header.flags);
+                    AppLog.e("Message Decryption Error: enc_len: %d chan: %d %s flags: %01x", recv_header.enc_len, recv_header.chan, Channel.name(recv_header.chan), recv_header.flags);
                     return -1;
                 }
 
@@ -127,6 +126,7 @@ class AapPoll {
         int offset = 0;
 
         if ((header.flags & 0x08) != 0x08) {
+            //FIXME sometimes we get the wrong flag. Why? Corrupted read?
             AppLog.e("WRONG FLAG: enc_len: %d  chan: %d %s flags: 0x%02x",
                     header.enc_len, header.chan, Channel.name(header.chan), header.flags);
             return null;
@@ -134,6 +134,7 @@ class AapPoll {
 
         ByteArray ba = AapSsl.decrypt(offset, header.enc_len, buf);
         if (ba == null) {
+            AppLog.e("Could not decrypt offset %d, enc_len %d", offset, header.enc_len);
             return null;
         }
 

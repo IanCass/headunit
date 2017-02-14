@@ -16,6 +16,9 @@ import ca.yyx.hu.utils.AppLog;
 /**
  * @author algavris
  * @date 29/05/2016.
+ *
+ * @author iancass
+ * @date 14/02/2017
  */
 
 public class UsbAccessoryConnection implements AccessoryConnection {
