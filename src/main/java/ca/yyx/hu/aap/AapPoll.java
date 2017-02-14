@@ -18,6 +18,9 @@ import ca.yyx.hu.utils.Utils;
 /**
  * @author algavris
  * @date 01/10/2016.
+ *
+ * @author iancass
+ * @date 14/02/2017
  */
 
 class AapPoll {
@@ -61,23 +64,38 @@ class AapPoll {
         }
 
         // move the data we've read into the bytebuffer
-        fifo.put(recv_buffer, fifo.position(), size);
+        fifo.put(recv_buffer, 0, size);
         fifo.flip();
 
         try {
             while (fifo.hasRemaining()) {
 
                 // Parse the header
-                fifo.get(header, 0, 4);
+                try {
+                    fifo.get(header, 0, 4);
+                } catch (BufferUnderflowException e) {
+                    // we'll come back later for more data
+                    AppLog.e("BufferUnderflowException whilst trying to read 4 bytes capacity = %d, position = %d", fifo.capacity(), fifo.position());
+                    return 0;
+                }
                 recv_header.decode(header);
 
                 // hack because these message types have 8 byte headers
                 if (recv_header.chan == Channel.ID_VID && recv_header.flags == 9) {
+                    //FIXME - check we CAN move forward 4 places!
                     fifo.position(fifo.position() + 4);
                 }
 
                 // Retrieve the entire message now we know the length
-                fifo.get(buf, 0, recv_header.enc_len);
+                try {
+                    fifo.get(buf, 0, recv_header.enc_len);
+                } catch (BufferUnderflowException e) {
+                    // rewind so we process the header again next time
+                    AppLog.v("BufferUnderflowException whilst trying to read %d bytes limit = %d, position = %d", recv_header.enc_len, fifo.limit(), fifo.position());
+                    fifo.position(fifo.position() - 4);
+                    fifo.compact();
+                    return 0;
+                }
 
                 // Decrypt & Process 1 received encrypted message
                 AapMessage msg = decryptMessage(recv_header, buf);
@@ -89,16 +107,16 @@ class AapPoll {
 
                 // process the message
                 iaap_msg_process(msg);
+
+
             }
-        } catch (BufferUnderflowException e) {
-            // Not enough bytes. ignore.
-            AppLog.e(e);
         } catch (InvalidProtocolBufferNanoException e) {
             // erk!
             AppLog.e(e);
             return -1;
         }
-        // Prepare for next write
+
+        // consume
         fifo.compact();
 
         return 0;
