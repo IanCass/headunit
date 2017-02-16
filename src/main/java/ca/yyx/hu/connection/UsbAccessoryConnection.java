@@ -200,7 +200,6 @@ public class UsbAccessoryConnection implements AccessoryConnection {
         }
     }
 
-
     @Override
     public int recv(byte[] buf, int length, int timeout) {
         synchronized (sLock) {
@@ -218,7 +217,8 @@ public class UsbAccessoryConnection implements AccessoryConnection {
         }
     }
 
-    /*
+
+/*
     @Override
     public int recv(byte[] dest, int length, int timeoutMillis) {
         final UsbRequest request = new UsbRequest();
@@ -228,6 +228,7 @@ public class UsbAccessoryConnection implements AccessoryConnection {
             if (!request.queue(buf, length)) {
                 return -1;
             }
+
             final UsbRequest response = mUsbDeviceConnection.requestWait();
             if (response == null) {
                 return -1;
@@ -245,7 +246,8 @@ public class UsbAccessoryConnection implements AccessoryConnection {
             request.close();
         }
 
-    }*/
+    }
+    */
 
     private class UsbOpenException extends Exception {
         UsbOpenException(String message) {
