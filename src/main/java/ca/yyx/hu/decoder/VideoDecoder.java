@@ -5,6 +5,8 @@ import android.media.MediaFormat;
 import android.view.SurfaceHolder;
 
 import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
+import java.util.concurrent.TimeUnit;
 
 import ca.yyx.hu.utils.AppLog;
 
@@ -27,6 +29,8 @@ public class VideoDecoder {
 
         synchronized (sLock) {
 
+            //AppLog.e("Video = (%d)", size);
+
             if (mCodec == null) {
                 AppLog.v("Codec is not initialized");
                 return;
@@ -46,15 +50,16 @@ public class VideoDecoder {
 
             ByteBuffer content = ByteBuffer.wrap(buffer, offset, size);
 
-            while (content.hasRemaining()) {
+            //while (content.hasRemaining()) {
 
+                //FIXME don't provide more content to codec_input_provide than it can consume
                 if (!codec_input_provide(content)) {
                     AppLog.e("Dropping content because there are no available buffers.");
                     return;
                 }
 
                 codec_output_consume();
-            }
+            //}
         }
     }
 
@@ -66,6 +71,7 @@ public class VideoDecoder {
                 AppLog.e("Throwable creating video/avc decoder: " + t);
             }
             try {
+                AppLog.v("Creating codec for video/avc %dx%d", mWidth, mHeight);
                 mCodecBufferInfo = new MediaCodec.BufferInfo();                         // Create Buffer Info
                 MediaFormat format = MediaFormat.createVideoFormat("video/avc", mWidth, mHeight);
                 mCodec.configure(format, mHolder.getSurface(), null, 0);               // Configure codec for H.264 with given width and height, no crypto and no flag (ie decode)
@@ -93,29 +99,27 @@ public class VideoDecoder {
 
     private boolean codec_input_provide(ByteBuffer content) {            // Called only by media_decode() with new NAL unit in Byte Buffer
         try {
-            final int inputBufIndex = mCodec.dequeueInputBuffer(1000000);           // Get input buffer with 1 second timeout
+            final int inputBufIndex = mCodec.dequeueInputBuffer(TimeUnit.SECONDS.toMicros(1));           // Get input buffer with 1 second timeout
             if (inputBufIndex < 0) {
-                AppLog.e("dequeueInputBuffer: "+inputBufIndex);
+                AppLog.e("dequeueInputBuffer: %d ", inputBufIndex);
                 return false;                                                 // Done with "No buffer" error
             }
 
             final ByteBuffer buffer = mInputBuffers[inputBufIndex];
-
-            final int capacity = buffer.capacity();
             buffer.clear();
-            if (content.remaining() <= capacity) {                           // If we can just put() the content...
+            int remaining = buffer.remaining();
+
+            AppLog.v("Video Buffer capacity %d, limit %d, position %d, remaining %d", buffer.capacity(), buffer.limit(), buffer.position(), buffer.remaining());
+            if (content.remaining() <= remaining) {                           // If we can just put() the content...
                 buffer.put(content);                                           // Put the content
             } else {
                 //FIXME there be bugs here! When we hit this code, the stream stops
                 // Else... (Should not happen ?)
-                AppLog.e("content.hasRemaining (): " + content.hasRemaining() + "  capacity: " + capacity);
 
-                int limit = content.limit();
-                content.limit(content.position() + capacity);                 // Temporarily set constrained limit
-                buffer.put(content);
-                content.limit(limit);                                          // Restore original limit
+                // Drop content - this causes screen corruption but it doesn't break
+                AppLog.e("content.remaining: %d, capacity: %d, limit: %d", content.remaining() , remaining, content.limit());
+                content.clear();
             }
-            buffer.flip();                                                   // Flip buffer for reading
 
             mCodec.queueInputBuffer(inputBufIndex, 0 /* offset */, buffer.limit(), 0, 0);
             return true;                                                    // Processed
