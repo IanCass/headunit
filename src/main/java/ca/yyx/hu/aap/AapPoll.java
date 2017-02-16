@@ -76,28 +76,22 @@ class AapPoll {
                 fifo.mark();
                 try {
                     fifo.get(header, 0, 4);
-                } catch (BufferUnderflowException e) {
-                    // we'll come back later for more data
-                    AppLog.v("BufferUnderflowException whilst trying to read 4 bytes capacity = %d, position = %d", fifo.capacity(), fifo.position());
-                    return 0;
-                }
-                recv_header.decode(header);
 
-                // hack because these message types have 8 byte headers
-                if (recv_header.chan == Channel.ID_VID && recv_header.flags == 9) {
-                    //FIXME - check we CAN move forward 4 places!
+                    recv_header.decode(header);
 
-                    byte[] skipped = new byte[4];
-                    fifo.get(skipped, 0, 4);
-                    AppLog.e("Skipping! chan %d, flags %d, length %d, data %s", recv_header.chan, recv_header.flags, recv_header.chan, byteArrayToHex(skipped));
-                }
+                    // hack because these message types have 8 byte headers
+                    if (recv_header.chan == Channel.ID_VID && recv_header.flags == 9) {
+                        //FIXME - check we CAN move forward 4 places!
 
-                // Retrieve the entire message now we know the length
-                try {
+                        byte[] skipped = new byte[4];
+                        fifo.get(skipped, 0, 4);
+                        //AppLog.e("Skipping! chan %d, flags %d, length %d, data %s", recv_header.chan, recv_header.flags, recv_header.chan, byteArrayToHex(skipped));
+                    }
+
+                    // Retrieve the entire message now we know the length
                     fifo.get(buf, 0, recv_header.enc_len);
                 } catch (BufferUnderflowException e) {
-                    // rewind so we process the header again next time
-                    AppLog.e("BufferUnderflowException whilst trying to read %d bytes limit = %d, position = %d", recv_header.enc_len, fifo.limit(), fifo.position());
+                    //AppLog.e("BufferUnderflowException whilst trying to read %d bytes limit = %d, position = %d", recv_header.enc_len, fifo.limit(), fifo.position());
                     fifo.reset();
                     break;
                 }
