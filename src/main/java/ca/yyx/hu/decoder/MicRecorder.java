@@ -11,7 +11,7 @@ import ca.yyx.hu.utils.AppLog;
  * @date 12/05/2016.
  */
 public class MicRecorder {
-    private static final int SAMPLE_RATE_IN_HZ = 16000;
+    private static final int SAMPLE_RATE_IN_HZ = 8000;
     static final int MIC_BUFFER_SIZE = AudioRecord.getMinBufferSize(SAMPLE_RATE_IN_HZ, AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_16BIT);
 
     private AudioRecord mMicAudioRecord = null;
