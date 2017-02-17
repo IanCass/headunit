@@ -40,7 +40,7 @@ public class AapTransport implements Handler.Callback, MicRecorder.Listener {
 
     public AapTransport(AudioDecoder audioDecoder, VideoDecoder videoDecoder, AudioManager audioManager, String btMacAddress, Listener listener) {
 
-        mPollThread = new HandlerThread("AapTransport:Handler", Process.THREAD_PRIORITY_DISPLAY);
+        mPollThread = new HandlerThread("AapTransport:Handler", Process.THREAD_PRIORITY_URGENT_AUDIO);
 
         mMicRecorder = new MicRecorder();
         mMicRecorder.setListener(this);
