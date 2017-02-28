@@ -25,14 +25,18 @@ import android.widget.Toast;
 import ca.yyx.hu.App;
 import ca.yyx.hu.R;
 import ca.yyx.hu.RemoteControlReceiver;
+import ca.yyx.hu.aap.protocol.messages.NightModeEvent;
 import ca.yyx.hu.connection.AccessoryConnection;
 import ca.yyx.hu.connection.UsbAccessoryConnection;
 import ca.yyx.hu.connection.SocketAccessoryConnection;
 import ca.yyx.hu.decoder.AudioDecoder;
+import ca.yyx.hu.location.GpsLocationService;
+import ca.yyx.hu.roadrover.DeviceListener;
 import ca.yyx.hu.connection.UsbReceiver;
 import ca.yyx.hu.utils.LocalIntent;
 import ca.yyx.hu.utils.AppLog;
 import ca.yyx.hu.utils.NightMode;
+import ca.yyx.hu.utils.Settings;
 import ca.yyx.hu.utils.Utils;
 
 /**
@@ -52,6 +56,7 @@ public class AapService extends Service implements UsbReceiver.Listener, Accesso
     private AccessoryConnection mAccessoryConnection;
     private UsbReceiver mUsbReceiver;
     private BroadcastReceiver mTimeTickReceiver;
+    private DeviceListener mDeviceListener;
 
     @Nullable
     @Override
@@ -88,8 +93,10 @@ public class AapService extends Service implements UsbReceiver.Listener, Accesso
         mMediaSession.setFlags(MediaSessionCompat.FLAG_HANDLES_MEDIA_BUTTONS | MediaSessionCompat.FLAG_HANDLES_TRANSPORT_CONTROLS);
 
         mUsbReceiver = new UsbReceiver(this);
-        mTimeTickReceiver = new TimeTickReceiver(this, mUiModeManager);
+        mTimeTickReceiver = new TimeTickReceiver(new Settings(this), mUiModeManager);
 
+        mDeviceListener = new DeviceListener();
+        registerReceiver(mDeviceListener, DeviceListener.createIntentFilter());
         registerReceiver(mTimeTickReceiver, new IntentFilter(Intent.ACTION_TIME_TICK));
         registerReceiver(mUsbReceiver, UsbReceiver.createFilter());
     }
@@ -98,6 +105,7 @@ public class AapService extends Service implements UsbReceiver.Listener, Accesso
     public void onDestroy() {
         super.onDestroy();
         onDisconnect();
+        unregisterReceiver(mDeviceListener);
         unregisterReceiver(mTimeTickReceiver);
         unregisterReceiver(mUsbReceiver);
         mUiModeManager.disableCarMode(0);
@@ -130,6 +138,7 @@ public class AapService extends Service implements UsbReceiver.Listener, Accesso
                 .setPriority(Notification.PRIORITY_HIGH)
                 .build();
 
+        startService(GpsLocationService.intent(this));
 
         mMediaSession.setPlaybackState(new PlaybackStateCompat.Builder()
                 .setState(PlaybackStateCompat.STATE_PAUSED, 0, 0)
@@ -164,7 +173,7 @@ public class AapService extends Service implements UsbReceiver.Listener, Accesso
         int connectionType = intent.getIntExtra(EXTRA_CONNECTION_TYPE, 0);
 
         if (connectionType == TYPE_USB) {
-            UsbDevice device = LocalIntent.deviceFromIntent(intent);
+            UsbDevice device = LocalIntent.extractDevice(intent);
             if (device == null) {
                 AppLog.e("No device in " + intent);
                 return null;
@@ -206,17 +215,17 @@ public class AapService extends Service implements UsbReceiver.Listener, Accesso
 
         @Override
         public void onCommand(String command, Bundle extras, ResultReceiver cb) {
-            AppLog.d(command);
+            AppLog.i(command);
         }
 
         @Override
         public void onCustomAction(String action, Bundle extras) {
-            AppLog.d(action);
+            AppLog.i(action);
         }
 
         @Override
         public void onSkipToNext() {
-            AppLog.d("onSkipToNext");
+            AppLog.i("onSkipToNext");
 
             App.get(mContext).transport().sendButton(KeyEvent.KEYCODE_MEDIA_NEXT, true);
             Utils.ms_sleep(10);
@@ -225,7 +234,7 @@ public class AapService extends Service implements UsbReceiver.Listener, Accesso
 
         @Override
         public void onSkipToPrevious() {
-            AppLog.d("onSkipToPrevious");
+            AppLog.i("onSkipToPrevious");
 
             App.get(mContext).transport().sendButton(KeyEvent.KEYCODE_MEDIA_PREVIOUS, true);
             Utils.ms_sleep(10);
@@ -234,7 +243,7 @@ public class AapService extends Service implements UsbReceiver.Listener, Accesso
 
         @Override
         public void onPlay() {
-            AppLog.d("PLAY");
+            AppLog.i("PLAY");
 
             App.get(mContext).transport().sendButton(KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE, true);
             Utils.ms_sleep(10);
@@ -243,7 +252,7 @@ public class AapService extends Service implements UsbReceiver.Listener, Accesso
 
         @Override
         public boolean onMediaButtonEvent(Intent mediaButtonEvent) {
-            AppLog.d(mediaButtonEvent.toString());
+            AppLog.i(mediaButtonEvent.toString());
             return super.onMediaButtonEvent(mediaButtonEvent);
         }
     }
@@ -270,14 +279,12 @@ public class AapService extends Service implements UsbReceiver.Listener, Accesso
 
     private static class TimeTickReceiver extends BroadcastReceiver {
         private final UiModeManager mUiModeManager;
-        private final Context mContext;
         private final NightMode mNightMode;
         private boolean mLastNightMode = false;
 
-        public TimeTickReceiver(Context context, UiModeManager uiModeManager) {
-            mContext = context;
+        public TimeTickReceiver(Settings settings, UiModeManager uiModeManager) {
             mUiModeManager = uiModeManager;
-            mNightMode = new NightMode();
+            mNightMode = new NightMode(settings);
         }
 
         @Override
@@ -288,8 +295,8 @@ public class AapService extends Service implements UsbReceiver.Listener, Accesso
                 mLastNightMode = isCurrent;
 
                 mUiModeManager.setNightMode(isCurrent ? UiModeManager.MODE_NIGHT_YES : UiModeManager.MODE_NIGHT_NO);
-                AppLog.d(mNightMode.toString());
-                App.get(mContext).transport().sendNightMode(isCurrent);
+                AppLog.i(mNightMode.toString());
+                App.get(context).transport().send(new NightModeEvent(isCurrent));
             }
         }
     }
